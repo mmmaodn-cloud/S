@@ -13,10 +13,10 @@ jobs:
     - name: Checkout Code
       uses: actions/checkout@v4
 
-    - name: Install Unzip Utility
-      run: sudo apt-get update && sudo apt-get install -y unzip zip
+    - name: Install Unzip and Gradle
+      run: sudo apt-get update && sudo apt-get install -y unzip gradle
 
-    - name: Unzip Project Files
+    - name: Unzip All Zip Files
       run: |
         find . -maxdepth 2 -name "*.zip" -exec unzip -o {} \;
 
@@ -26,22 +26,22 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
 
-    - name: Locate and Fix gradlew
+    - name: Setup Gradle Wrapper and Permissions
       run: |
-        GRADLE_FILE=$(find . -name "gradlew" -type f | head -n 1)
-        if [ -z "$GRADLE_FILE" ]; then
-          echo "محتويات المجلد الحالي بعد فك الضغط:"
-          ls -R
-          echo "خطأ: الملف salati.zip لا يحتوي على مشروع أندرويد متكامل (ناقص ملف gradlew)."
+        PROJ_DIR=$(find . -name "build.gradle*" -o -name "settings.gradle*" | head -n 1 | xargs dirname)
+        if [ -z "$PROJ_DIR" ]; then
+          echo "لم يتم العثور على ملفات مشروع أندرويد!"
           exit 1
         fi
-        chmod +x "$GRADLE_FILE"
+        echo "المشروع موجود في: $PROJ_DIR"
+        cd "$PROJ_DIR"
+        gradle wrapper
+        chmod +x gradlew
 
     - name: Build APK
       run: |
-        GRADLE_PATH=$(find . -name "gradlew" -type f | head -n 1)
-        PROJECT_DIR=$(dirname "$GRADLE_PATH")
-        cd "$PROJECT_DIR"
+        PROJ_DIR=$(find . -name "build.gradle*" -o -name "settings.gradle*" | head -n 1 | xargs dirname)
+        cd "$PROJ_DIR"
         ./gradlew assembleDebug --stacktrace
 
     - name: Upload APK
