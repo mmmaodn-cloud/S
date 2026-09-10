@@ -18,16 +18,13 @@ jobs:
         sudo apt-get update && sudo apt-get install -y unzip
         find . -maxdepth 2 -name "*.zip" -exec unzip -o {} \;
 
-    - name: Set up JDK 11
+    - name: Set up JDK 17
       uses: actions/setup-java@v4
       with:
-        java-version: '11'
+        java-version: '17'
         distribution: 'temurin'
 
-    - name: Setup Gradle
-      uses: gradle/actions/setup-gradle@v3
-
-    - name: Build APK with Gradle
+    - name: Setup Gradle Wrapper
       run: |
         PROJ_DIR=$(find . -name "build.gradle*" -o -name "settings.gradle*" | head -n 1 | xargs dirname)
         if [ -z "$PROJ_DIR" ]; then
@@ -35,8 +32,14 @@ jobs:
           exit 1
         fi
         cd "$PROJ_DIR"
-        chmod +x gradlew || true
-        gradle assembleDebug --no-daemon --stacktrace
+        gradle wrapper
+        chmod +x gradlew
+
+    - name: Build with Gradle Wrapper
+      run: |
+        PROJ_DIR=$(find . -name "build.gradle*" -o -name "settings.gradle*" | head -n 1 | xargs dirname)
+        cd "$PROJ_DIR"
+        ./gradlew assembleDebug --no-daemon
 
     - name: Upload APK
       uses: actions/upload-artifact@v4
