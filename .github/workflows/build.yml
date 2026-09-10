@@ -13,11 +13,9 @@ jobs:
     - name: Checkout Code
       uses: actions/checkout@v4
 
-    - name: Install Unzip
-      run: sudo apt-get update && sudo apt-get install -y unzip
-
     - name: Unzip All Zip Files
       run: |
+        sudo apt-get update && sudo apt-get install -y unzip
         find . -maxdepth 2 -name "*.zip" -exec unzip -o {} \;
 
     - name: Set up JDK 17
@@ -33,15 +31,15 @@ jobs:
       run: |
         PROJ_DIR=$(find . -name "build.gradle*" -o -name "settings.gradle*" | head -n 1 | xargs dirname)
         if [ -z "$PROJ_DIR" ]; then
-          echo "لم يتم العثور على ملفات مشروع أندرويد!"
+          echo "لم يتم العثور على مشروع أندرويد!"
           exit 1
         fi
-        echo "المشروع موجود في: $PROJ_DIR"
         cd "$PROJ_DIR"
+        chmod +x gradlew || true
         gradle assembleDebug --stacktrace
 
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
         name: Salati-APK
-        path: "**/build/outputs/apk/debug/*.apk"
+        path: "**/*.apk"
